@@ -13,12 +13,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ApiClient {
 
+    public static final String url = null;
+
     public static final int REST_API_TIMEOUT = 20;
 
     //public static Converter.Factory converterFactory;
 
     public static <T> T getService(Class<T> c) {
-        String baseUrl = Urls.url + "";
+        String baseUrl = url + "";
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
         return getRetrofitBuilder(baseUrl, false).build().create(c);
