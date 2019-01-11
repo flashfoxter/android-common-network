@@ -3,6 +3,8 @@ package com.be.network;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import lombok.Getter;
+import lombok.Setter;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Retrofit;
@@ -13,7 +15,9 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ApiClient {
 
-    public static final String url = null;
+   @Getter
+   @Setter
+   private static String url;
 
     public static final int REST_API_TIMEOUT = 20;
 
