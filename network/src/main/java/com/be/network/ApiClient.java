@@ -59,7 +59,7 @@ public class ApiClient {
         return localInstance;
     }
 
-    public <T> T getServiceLocal(Class<T> c) {
+    public <T> T  getServiceLocal(Class<T> c) {
         String baseUrl = url + "";
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
@@ -98,7 +98,7 @@ public class ApiClient {
     }
 
     @Deprecated
-    public <T> T getService(Class<T> c) {
+    public static <T> T getService(Class<T> c) {
         String baseUrl = url + "";
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
