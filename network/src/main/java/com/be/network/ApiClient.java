@@ -7,9 +7,16 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -103,15 +110,18 @@ public class ApiClient {
 
     @Deprecated
     private static OkHttpClient getHttpClient() {
-        return new OkHttpClient.Builder().addInterceptor(chain -> {
+        OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder().addInterceptor(chain -> {
             Request.Builder builder = chain.request().newBuilder();
             builder.addHeader("X-Requested-With", "XMLHttpRequest");
             return chain.proceed(builder.build());
         })
                 .connectTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
                 .readTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
-                .writeTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
-                .build();
+                .writeTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS);
+
+
+        addUnsafeTrust(httpClientBuilder);
+        return httpClientBuilder.build();
     }
 
     @Deprecated
@@ -121,6 +131,45 @@ public class ApiClient {
                 .callbackExecutor(Executors.newSingleThreadExecutor())
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(getHttpClient());
+    }
+
+    private static void addUnsafeTrust(OkHttpClient.Builder builder) {
+
+        // Create a trust manager that does not validate certificate chains
+        final TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                    }
+
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                    }
+
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new java.security.cert.X509Certificate[]{};
+                    }
+                }
+        };
+
+        // Install the all-trusting trust manager
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContext.getInstance("SSL");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        try {
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+
+        // Create an ssl socket factory with our all-trusting manager
+        final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+        builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
+        builder.hostnameVerifier((hostname, session) -> true);
     }
 
 }
