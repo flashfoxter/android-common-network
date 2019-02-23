@@ -31,10 +31,16 @@ public class ApiClient {
     private static String url;
     public static final int REST_API_TIMEOUT = 20;
     @SuppressWarnings("Lombok")
-    @Getter @Setter private OkHttpClient httpClient;
+    @Getter
+    @Setter
+    private OkHttpClient httpClient;
     private static volatile ApiClient instance;
-    @Getter @Setter private List<Interceptor> interceptors;
-    @Getter @Setter private Cache cache;
+    @Getter
+    @Setter
+    private List<Interceptor> interceptors;
+    @Getter
+    @Setter
+    private Cache cache;
 
     public static ApiClient getInstance() {
         ApiClient localInstance = instance;
@@ -49,14 +55,14 @@ public class ApiClient {
         return localInstance;
     }
 
-    public <T> T getService(Class<T> c) {
+    public <T> T getServiceLocal(Class<T> c) {
         String baseUrl = url + "";
         if (!baseUrl.endsWith("/"))
             baseUrl = baseUrl + "/";
-        return getRetrofitBuilder(baseUrl, false).build().create(c);
+        return getRetrofitBuilderLocal(baseUrl, false).build().create(c);
     }
 
-    private OkHttpClient getHttpClient() {
+    private OkHttpClient getHttpClientLocal() {
         OkHttpClient.Builder okHttpBuilder = new OkHttpClient.Builder();
         okHttpBuilder.addInterceptor(chain -> {
             Request.Builder builder = chain.request().newBuilder();
@@ -67,7 +73,7 @@ public class ApiClient {
         okHttpBuilder.readTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS);
         okHttpBuilder.writeTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS);
         if (!interceptors.isEmpty()) {
-            for (Interceptor interceptor:interceptors) {
+            for (Interceptor interceptor : interceptors) {
                 okHttpBuilder.addInterceptor(interceptor);
             }
         }
@@ -78,13 +84,43 @@ public class ApiClient {
         return okHttpClient;
     }
 
-    private Retrofit.Builder getRetrofitBuilder(String path, boolean mock) {
+    private Retrofit.Builder getRetrofitBuilderLocal(String path, boolean mock) {
         Retrofit.Builder retrofitBuilder = new Retrofit.Builder();
         retrofitBuilder.baseUrl(path);
         retrofitBuilder.callbackExecutor(Executors.newSingleThreadExecutor());
         retrofitBuilder.addConverterFactory(GsonConverterFactory.create());
-        retrofitBuilder.client(getHttpClient());
+        retrofitBuilder.client(getHttpClientLocal());
         return retrofitBuilder;
+    }
+
+    @Deprecated
+    public <T> T getService(Class<T> c) {
+        String baseUrl = url + "";
+        if (!baseUrl.endsWith("/"))
+            baseUrl = baseUrl + "/";
+        return getRetrofitBuilder(baseUrl, false).build().create(c);
+    }
+
+    @Deprecated
+    private static OkHttpClient getHttpClient() {
+        return new OkHttpClient.Builder().addInterceptor(chain -> {
+            Request.Builder builder = chain.request().newBuilder();
+            builder.addHeader("X-Requested-With", "XMLHttpRequest");
+            return chain.proceed(builder.build());
+        })
+                .connectTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
+                .readTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
+                .writeTimeout(REST_API_TIMEOUT, TimeUnit.SECONDS)
+                .build();
+    }
+
+    @Deprecated
+    private static Retrofit.Builder getRetrofitBuilder(String path, boolean mock) {
+        return new Retrofit.Builder()
+                .baseUrl(path)
+                .callbackExecutor(Executors.newSingleThreadExecutor())
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(getHttpClient());
     }
 
 }
