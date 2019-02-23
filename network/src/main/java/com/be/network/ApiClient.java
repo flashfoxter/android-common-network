@@ -38,9 +38,6 @@ public class ApiClient {
     private static String url;
     public static final int REST_API_TIMEOUT = 20;
     @SuppressWarnings("Lombok")
-    @Getter
-    @Setter
-    private OkHttpClient httpClient;
     private static volatile ApiClient instance;
     @Getter
     @Setter
